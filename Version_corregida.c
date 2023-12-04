@@ -46,6 +46,8 @@ double* leerMatrizDesdeArchivo(const char* nombreArchivo, int* tamano) {
 int main(int argc, char** argv){
     int num_proc, rank;
 
+    int tamanoMatriz;
+
     double *recA, *recB, *recC;
     double* matrizA;
     double* matrizB;
@@ -57,8 +59,6 @@ int main(int argc, char** argv){
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     if (rank == 0){
-
-        int tamanoMatriz;
 
         matrizA = leerMatrizDesdeArchivo("matrizA.txt", &tamanoMatriz);
         matrizB = leerMatrizDesdeArchivo("matrizB.txt", &tamanoMatriz);
@@ -84,8 +84,8 @@ int main(int argc, char** argv){
     //Vamos a hacer envios iterativos de una fila cada vez a cada proceso. Al final, recA tendra filas alternas. 
     //En el tamaño no sé si poner N o N * num_proc
     for (int i = 0; i < num_envios; i++){
-        MPI_Scatter(matrizA[i * num_proc * N], N, MPI_DOUBLE, recA[i* N], N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Scatter(matrizB[i * num_proc * N], N, MPI_DOUBLE, recB[i* N], N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatter(matrizA + (i*num_proc * N), N, MPI_DOUBLE, recA+(i* N), N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatter(matrizB+(i * num_proc * N), N, MPI_DOUBLE, recB+(i* N), N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
 
     //Ahora hacemos los calculos
@@ -98,7 +98,7 @@ int main(int argc, char** argv){
 
     //Ahora hacemos Gather iterativos igualmente
     for (int i=0; i < num_envios; i++){
-        MPI_Gather(recC[i * N], N, MPI_DOUBLE, matrizC[i * num_proc * N], N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gather(recC+(i * N), N, MPI_DOUBLE, matrizC+(i * num_proc * N), N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
